@@ -76,18 +76,27 @@ int KMPSearch(char *pat, char *txt)
 }
 
 // ======================== Main =========================
-int main()
+int main(int argc, char *argv[])
 {
-    FILE *file = fopen("i.csv", "r");
-    if (!file)
+    if (argc != 3)
     {
-        printf("Error: Could not open file.\n");
+        printf("Usage: %s <text_file> <pattern>\n", argv[0]);
         return 1;
     }
 
-    size_t buffer_size = 1024 * 1024; // 1 MB buffer (تقدر تكبره حسب حجم البيانات)
+    char *filename = argv[1]; // اسم الملف من التيرمنال
+    char *pat = argv[2];      // النمط المراد البحث عنه
+
+    FILE *file = fopen(filename, "r");
+    if (!file)
+    {
+        perror("Error opening file");
+        return 1;
+    }
+
+    size_t buffer_size = 1024 * 1024; // 1 MB buffer
     char *line = (char *)malloc(buffer_size);
-    if (line == NULL)
+    if (!line)
     {
         fprintf(stderr, "Memory allocation failed for line buffer\n");
         fclose(file);
@@ -96,10 +105,6 @@ int main()
 
     // skip header
     fgets(line, buffer_size, file);
-
-    char pat[256];
-    printf("Enter pattern to search: ");
-    scanf("%255s", pat);
 
     int total_sum = 0;
     double start = omp_get_wtime();
@@ -112,7 +117,7 @@ int main()
         token = strtok(NULL, ",");       // title
         token = strtok(NULL, ",");       // text
 
-        if (token == NULL) continue;
+        if (!token) continue;
 
         size_t len = strlen(token);
         if (len > 1 && token[0] == '"' && token[len - 1] == '"')
