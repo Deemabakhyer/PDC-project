@@ -1,23 +1,21 @@
-# Windows Makefile for OpenMP C programs (MSYS2/MinGW)
-# Usage:
-#   - Build all .c files into .exe:   make
-#   - Clean generated executables:     make clean
-#
-# Mirrors the macOS Makefile behavior: one executable per .c file.
+CC = gcc-13
+CFLAGS = -fopenmp -O2 -Wall
 
-CC       = gcc
-CFLAGS   = -O2 -fopenmp
-LDFLAGS  =
-
-EXEEXT   = .exe
-SOURCES  = $(wildcard *.c)
-TARGETS  = $(SOURCES:.c=$(EXEEXT))
+# Collect all .c files in the current directory
+SRC = $(wildcard *.c)
+# Remove the .c extension for output binaries
+TARGETS = $(SRC:.c=)
 
 all: $(TARGETS)
 
-%$(EXEEXT): %.c
-	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+# Generic build rule
+%: %.c
+	$(CC) $(CFLAGS) $< -o $@
 
-.PHONY: clean
+run:
+	@echo "Usage: make <program_name> or ./<program_name>"
+
 clean:
-	-$(RM) $(TARGETS)
+	rm -f $(TARGETS)
+
+
