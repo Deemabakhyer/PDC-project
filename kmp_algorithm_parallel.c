@@ -135,14 +135,20 @@ int main(int argc, char *argv[])
     double start_time = omp_get_wtime();
 
     // Parallel processing
-    #pragma omp parallel for
+    
+ #pragma omp parallel for schedule(runtime) reduction(+:total_sum)
     for (int i = 0; i < line_count; i++)
     {
         char *line = lines[i];
-
-        char *token = strtok(line, ","); // id
-        token = strtok(NULL, ",");       // title
-        token = strtok(NULL, ",");       // text
+        //char *token = strtok(line, ","); // id
+        //token = strtok(NULL, ",");       // title
+        //token = strtok(NULL, ",");       // text
+        
+        //repalced with strtok_r (its save with threads)
+        char *saveptr;
+        char *token = strtok_r(line, ",", &saveptr); // id
+        token = strtok_r(NULL, ",", &saveptr);       // title
+        token = strtok_r(NULL, ",", &saveptr);       // text
 
         if (token != NULL)
         {
