@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Usage: ./run_omp_tests.sh <program> <input_file> <pattern>
-# Usage: ./run_omp_tests.sh ./kmp_algorithm_parallel i.csv and
-# Example: ./run_omp_tests.sh ./kmp_algorithm_parallel i.csv and
+# Usage Example:
+# ./run_omp_tests.sh ./kmp_algorithm_parallel i.csv and
 
 if [ "$#" -ne 3 ]; then
     echo "Usage: $0 <program_path> <dataset_path> <pattern>"
@@ -13,49 +12,64 @@ PROGRAM=$1
 DATASET=$2
 PATTERN=$3
 
-THREADS=(1 2 4 6 8 10 12 14 16 18 20)
+# Reduced thread counts
+THREADS=(1 2 4 8 16)
 SCHEDULES=("static" "dynamic" "guided")
+CHUNKS=(16 32 64 128 256 512 1024)
 
 echo "Running OpenMP Tuning Tests..."
 echo "Program: $PROGRAM"
 echo "Dataset: $DATASET"
 echo "Pattern: $PATTERN"
-echo "-----------------------------------------------"
+echo "--------------------------------------------------------------"
+echo "Threads | Schedule & Chunk size | Avg Time ± StdDev (s) | Matches"
+echo "--------------------------------------------------------------"
 
 for sched in "${SCHEDULES[@]}"; do
-    echo "Schedule Type: $sched"
-    echo "Threads | Trial1 | Trial2 | Trial3 | Average | Matches"
-    echo "------------------------------------------------------"
-    
-    for t in "${THREADS[@]}"; do
-        export OMP_NUM_THREADS=$t
-        export OMP_SCHEDULE=$sched
-        
-        total_time=0
-        total_matches=0
-        
-        for i in {1..3}; do
-            output=$(./$PROGRAM $DATASET $PATTERN)
-            
-            # استخراج الوقت وعدد الماتشز من ناتج البرنامج
-            time_taken=$(echo "$output" | grep "Time taken" | awk '{print $3}')
-            matches=$(echo "$output" | grep "Total matches" | awk '{print $3}')
-            
-            if [ -z "$time_taken" ]; then
-                echo "⚠️ Warning: Failed to parse output for trial $i (threads=$t, schedule=$sched)"
-                continue
+    for chunk in "${CHUNKS[@]}"; do
+        for t in "${THREADS[@]}"; do
+            export OMP_NUM_THREADS=$t
+            export OMP_SCHEDULE="${sched},${chunk}"
+
+            times=()
+            total_matches=0
+
+            # Run 3 trials
+            for i in {1..3}; do
+                output=$(./$PROGRAM $DATASET $PATTERN 2>/dev/null)
+                time_taken=$(echo "$output" | grep -i "Time taken" | awk '{print $3}')
+                matches=$(echo "$output" | grep -i "Total matches" | awk '{print $3}')
+
+                if [ -n "$time_taken" ]; then
+                    times+=($time_taken)
+                    total_matches=$matches
+                fi
+            done
+
+            if [ ${#times[@]} -gt 0 ]; then
+                # calculate mean
+                sum=0
+                for val in "${times[@]}"; do
+                    sum=$(echo "$sum + $val" | bc)
+                done
+                n=${#times[@]}
+                mean=$(echo "scale=6; $sum / $n" | bc)
+
+                # calculate stddev
+                sumsq=0
+                for val in "${times[@]}"; do
+                    diff=$(echo "$val - $mean" | bc)
+                    sq=$(echo "$diff * $diff" | bc)
+                    sumsq=$(echo "$sumsq + $sq" | bc)
+                done
+                stddev=$(echo "scale=6; sqrt($sumsq / $n)" | bc)
+
+                printf "%-7s | %-22s | %-18s | %s\n" "$t" "${sched},${chunk}" "${mean} ± ${stddev}" "$total_matches"
+            else
+                printf "%-7s | %-22s | %-18s | %s\n" "$t" "${sched},${chunk}" "N/A" "N/A"
             fi
-            
-            total_time=$(echo "$total_time + $time_taken" | bc)
-            total_matches=$matches
-            
-            eval "time_$i=$time_taken"
         done
-        
-        avg_time=$(echo "scale=6; $total_time / 3" | bc)
-        
-        printf "%-7s | %-7s | %-7s | %-7s | %-8s | %s\n" "$t" "$time_1" "$time_2" "$time_3" "$avg_time" "$total_matches"
     done
-    
-    echo ""
 done
+
+
