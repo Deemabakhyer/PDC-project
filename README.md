@@ -1,22 +1,21 @@
 # PDC-project
-Parallelized Large-Scale String Search: Finding and counting the occurrences of a specific pattern (or patterns) within a very large text file.
 
-**Run Instructions**
-***Serial Code****
-1-
-2-
-3-
+## Parallelized Large-Scale String Search
+This project implements **serial**, **parallel (OpenMP)**, and **distributed (MPI)** versions of the **KMP (Knuth–Morris–Pratt)** algorithm to efficiently search for patterns inside large-scale text datasets.
 
-***Parallel(OpenMP) Code****
-1-
-2-
-3-
+## Run Instructions
 
-***Distributed(MPI) Code****
-1-
-2-
-3-
+### **Serial Code**
+1.
+2.
+3.
 
-**Scripts to reproduce expierment**
-1-Makefile
-2-Python Script
+## **Parallel (OpenMP) Code**
+1.
+2.
+3.
+
+## **Distributed (MPI) Code**
+1.
+2.
+3.
