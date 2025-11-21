@@ -1,3 +1,11 @@
+/*
+ * MPI Pattern Matching
+ * 
+ * Reads a CSV file and counts occurrences of a pattern in the text column.
+ * Uses MPI to distribute the work across multiple processes and collects
+ * results with MPI_Reduce. Measures execution time with MPI_Wtime.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +15,7 @@
 #define BUFFER_SIZE 1024*1024
 
 // ======================== KMP Functions =========================
+// Compute the longest prefix-suffix array for KMP
 void computeLPSArray(char *pat, int M, int lps[])
 {
     int len = 0;
@@ -34,6 +43,7 @@ void computeLPSArray(char *pat, int M, int lps[])
     }
 }
 
+// KMP search: returns number of times pattern appears in the text
 int KMPSearch(char *pat, char *txt)
 {
     if (!txt) return 0;
@@ -61,8 +71,8 @@ int KMPSearch(char *pat, char *txt)
 
         if (j == M)
         {
-            res++;
-            j = lps[j - 1];
+            res++;             // found a match
+            j = lps[j - 1];   // continue searching
         }
         else if (i < N && pat[j] != txt[i])
         {
@@ -80,10 +90,10 @@ int KMPSearch(char *pat, char *txt)
 // ======================== Main =========================
 int main(int argc, char *argv[])
 {
-    MPI_Init(&argc, &argv);
+    MPI_Init(&argc, &argv);                  // Initialize MPI environment
     int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);    // Process ID
+    MPI_Comm_size(MPI_COMM_WORLD, &size);    // Number of processes
 
     if (argc != 3)
     {
@@ -100,6 +110,7 @@ int main(int argc, char *argv[])
     char **lines = NULL;
     int line_count = 0;
 
+    // ======================== Master Process Reads File =========================
     if (rank == 0)
     {
         FILE *file = fopen(filename, "r");
@@ -136,22 +147,17 @@ int main(int argc, char *argv[])
         free(buffer);
     }
 
-    // Broadcast line count to all processes
+    // ======================== Broadcast line count and pattern =========================
     MPI_Bcast(&line_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    // Broadcast pattern
     int pattern_len = strlen(pattern);
     MPI_Bcast(&pattern_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(pattern, pattern_len + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-    // Calculate range for each process
-    int chunk_size = line_count / size;
-    int start = rank * chunk_size;
-    int end = (rank == size - 1) ? line_count : start + chunk_size;
-
-    // Broadcast lines (all processes get full data)
+    // ======================== Allocate lines array for workers =========================
     if (rank != 0)
         lines = (char **)malloc(MAX_LINES * sizeof(char *));
+
+    // Broadcast each line to all processes
     for (int i = 0; i < line_count; i++)
     {
         int len = 0;
@@ -170,10 +176,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); // Synchronize before timing
     double start_time = MPI_Wtime();
 
-    // Local computation
+    // ======================== Compute local sum =========================
+    int chunk_size = line_count / size;
+    int start = rank * chunk_size;
+    int end = (rank == size - 1) ? line_count : start + chunk_size;
+
     int local_sum = 0;
     for (int i = start; i < end; i++)
     {
@@ -197,6 +207,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    // ======================== Reduce to get total sum =========================
     int total_sum = 0;
     MPI_Reduce(&local_sum, &total_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -209,6 +220,7 @@ int main(int argc, char *argv[])
         printf("Time taken: %f seconds\n", end_time - start_time);
     }
 
+    // ======================== Free memory =========================
     for (int i = 0; i < line_count; i++)
         if (lines[i]) free(lines[i]);
     free(lines);
