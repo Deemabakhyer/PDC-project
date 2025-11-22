@@ -4,8 +4,8 @@
 This project implements **serial**, **parallel (OpenMP)**, and **distributed (MPI)** versions of the **KMP (Knuth–Morris–Pratt)** algorithm to efficiently search for and count string patterns inside large-scale text datasets.
 
 ## Dataset
-**Dataset Name:** Wikipedia Plaintext Articles (2023-07-01).
-**Source:** https://www.kaggle.com/datasets/jjinho/wikipedia-20230701?select=i.parquet
+* **Dataset Name:** Wikipedia Plaintext Articles (2023-07-01).
+* **Source:** https://www.kaggle.com/datasets/jjinho/wikipedia-20230701?select=i.parquet
 
 ## Run Instructions
 to clone this repositry locally, run the following instruction:
