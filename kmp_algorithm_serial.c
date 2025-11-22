@@ -1,9 +1,18 @@
+/*
+ * Serial Pattern Matching
+ * 
+ * Reads a CSV file and counts occurrences of a pattern in the text column.
+ * Uses the KMP algorithm and measures execution time with omp_get_wtime().
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <omp.h>
 
 // ======================== KMP Functions =========================
+
+// Compute the longest prefix-suffix (LPS) array for KMP
 void computeLPSArray(char *pat, int M, int lps[])
 {
     int len = 0;
@@ -21,9 +30,7 @@ void computeLPSArray(char *pat, int M, int lps[])
         else
         {
             if (len != 0)
-            {
                 len = lps[len - 1];
-            }
             else
             {
                 lps[i] = 0;
@@ -33,6 +40,7 @@ void computeLPSArray(char *pat, int M, int lps[])
     }
 }
 
+// KMP search: returns number of occurrences of pattern in text
 int KMPSearch(char *pat, char *txt)
 {
     if (txt == NULL) return 0;
@@ -41,7 +49,8 @@ int KMPSearch(char *pat, char *txt)
     int N = strlen(txt);
 
     int *lps = (int *)malloc(M * sizeof(int));
-    if (lps == NULL) {
+    if (lps == NULL)
+    {
         fprintf(stderr, "Memory allocation failed\n");
         exit(1);
     }
@@ -78,15 +87,17 @@ int KMPSearch(char *pat, char *txt)
 // ======================== Main =========================
 int main(int argc, char *argv[])
 {
+    // ------------------ Argument check ------------------
     if (argc != 3)
     {
         printf("Usage: %s <text_file> <pattern>\n", argv[0]);
         return 1;
     }
 
-    char *filename = argv[1]; // اسم الملف من التيرمنال
-    char *pat = argv[2];      // النمط المراد البحث عنه
+    char *filename = argv[1]; // CSV file
+    char *pat = argv[2];      // pattern to search
 
+    // ------------------ Open file ------------------
     FILE *file = fopen(filename, "r");
     if (!file)
     {
@@ -94,6 +105,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // ------------------ Allocate line buffer ------------------
     size_t buffer_size = 1024 * 1024; // 1 MB buffer
     char *line = (char *)malloc(buffer_size);
     if (!line)
@@ -103,22 +115,25 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // skip header
+    // ------------------ Skip header ------------------
     fgets(line, buffer_size, file);
 
+    // ------------------ Pattern matching ------------------
     int total_sum = 0;
     double start = omp_get_wtime();
 
     while (fgets(line, buffer_size, file))
     {
-        line[strcspn(line, "\n")] = '\0';
+        line[strcspn(line, "\n")] = '\0'; // remove newline
 
+        // Extract the text column
         char *token = strtok(line, ","); // id
         token = strtok(NULL, ",");       // title
         token = strtok(NULL, ",");       // text
 
         if (!token) continue;
 
+        // Remove surrounding quotes if present
         size_t len = strlen(token);
         if (len > 1 && token[0] == '"' && token[len - 1] == '"')
         {
@@ -126,15 +141,19 @@ int main(int argc, char *argv[])
             token[len - 2] = '\0';
         }
 
+        // Count occurrences
         total_sum += KMPSearch(pat, token);
     }
 
     double end = omp_get_wtime();
 
+    // ------------------ Print results ------------------
     printf("Total matches: %d\n", total_sum);
     printf("Time taken: %f seconds\n", end - start);
 
+    // ------------------ Cleanup ------------------
     free(line);
     fclose(file);
+
     return 0;
 }
