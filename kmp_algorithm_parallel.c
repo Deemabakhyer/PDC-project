@@ -1,3 +1,11 @@
+/*
+ * Parallel Pattern Matching (OpenMP)
+ * 
+ * Reads a CSV file and counts occurrences of a pattern in the text column.
+ * Uses the KMP algorithm and OpenMP for parallel processing.
+ * Measures execution time using omp_get_wtime().
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +15,8 @@
 #define BUFFER_SIZE 1024*1024
 
 // ======================== KMP Functions =========================
+
+// Compute the longest prefix-suffix (LPS) array for KMP
 void computeLPSArray(char *pat, int M, int lps[])
 {
     int len = 0;
@@ -34,6 +44,7 @@ void computeLPSArray(char *pat, int M, int lps[])
     }
 }
 
+// KMP search: returns number of occurrences of pattern in text
 int KMPSearch(char *pat, char *txt)
 {
     if (!txt) return 0;
@@ -80,15 +91,17 @@ int KMPSearch(char *pat, char *txt)
 // ======================== Main =========================
 int main(int argc, char *argv[])
 {
+    // ------------------ Argument check ------------------
     if (argc != 3)
     {
         printf("Usage: %s <text_file> <pattern>\n", argv[0]);
         return 1;
     }
 
-    char *filename = argv[1];
-    char *pattern = argv[2];
+    char *filename = argv[1]; // CSV file
+    char *pattern = argv[2];  // pattern to search
 
+    // ------------------ Open file ------------------
     FILE *file = fopen(filename, "r");
     if (!file)
     {
@@ -96,6 +109,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // ------------------ Allocate memory ------------------
     char **lines = (char **)malloc(MAX_LINES * sizeof(char *));
     if (!lines)
     {
@@ -113,9 +127,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Skip header
+    // ------------------ Skip header ------------------
     fgets(buffer, BUFFER_SIZE, file);
 
+    // ------------------ Read all lines ------------------
     int line_count = 0;
     while (fgets(buffer, BUFFER_SIZE, file) && line_count < MAX_LINES)
     {
@@ -131,27 +146,24 @@ int main(int argc, char *argv[])
     fclose(file);
     free(buffer);
 
+    // ------------------ Parallel processing ------------------
     int total_sum = 0;
     double start_time = omp_get_wtime();
 
-    // Parallel processing
-    
- #pragma omp parallel for schedule(runtime) reduction(+:total_sum)
+    #pragma omp parallel for schedule(runtime) reduction(+:total_sum)
     for (int i = 0; i < line_count; i++)
     {
         char *line = lines[i];
-        //char *token = strtok(line, ","); // id
-        //token = strtok(NULL, ",");       // title
-        //token = strtok(NULL, ",");       // text
-        
-        //repalced with strtok_r (its save with threads)
+
+        // Use strtok_r for thread safety
         char *saveptr;
         char *token = strtok_r(line, ",", &saveptr); // id
         token = strtok_r(NULL, ",", &saveptr);       // title
         token = strtok_r(NULL, ",", &saveptr);       // text
 
-        if (token != NULL)
+        if (token)
         {
+            // Remove quotes if present
             size_t len = strlen(token);
             if (len > 1 && token[0] == '"' && token[len - 1] == '"')
             {
@@ -159,18 +171,23 @@ int main(int argc, char *argv[])
                 token[len - 2] = '\0';
             }
 
+<<<<<<< HEAD
             int count = KMPSearch(pattern, token);
 
             total_sum += count;
+=======
+            total_sum += KMPSearch(pattern, token);
+>>>>>>> origin/main
         }
     }
 
     double end_time = omp_get_wtime();
 
+    // ------------------ Print results ------------------
     printf("Total matches: %d\n", total_sum);
     printf("Time taken: %f seconds\n", end_time - start_time);
 
-    // Free allocated lines
+    // ------------------ Cleanup ------------------
     for (int i = 0; i < line_count; i++)
         free(lines[i]);
     free(lines);
