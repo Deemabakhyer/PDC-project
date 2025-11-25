@@ -161,7 +161,6 @@ int main(int argc, char *argv[])
 
             int count = KMPSearch(pattern, token);
 
-            // Simply add count to total_sum without atomic/reduction
             total_sum += count;
         }
     }
