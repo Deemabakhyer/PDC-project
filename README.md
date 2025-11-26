@@ -32,7 +32,7 @@ These steps will clone and open the repositry on your machine locally.
 ### Distributed (MPI) Code
 **In MSYS2 MINGW64 shell**
 1. Compile MPI code: 'mpicc kmp_mpi.c.c -o kmp_mpi'
-2. Run MPI program: 'kmp_mpi -np 4 ./kmp_mpi'
+2. Run MPI program: 'mpirun -np 4 ./kmp_mpi i.csv "and"'
 
 ## Additional Scripts
 1. **Makefile** - used for compiling c code files. 
