@@ -18,13 +18,13 @@ To clone this repositry locally, run the following instruction:
 These steps will clone and open the repositry on your machine locally.
 
 ### Serial Code
-**In MSYS2 MINGW64 shell**
+**In macOS Terminal**
 
 1. Run the instruction 'Makefile' to compile and run the source files.
 2. Run './kmp_algorithm_serial' follwed by the dataset name (e.g. 'i.csv') and the string pattern you want to search (e.g. 'and').
 
 ### Parallel (OpenMP) Code
-**In MSYS2 MINGW64 shell**
+**In macOS Terminal**
 
 1. Run the instruction 'Makefile' to compile and run the source files.
 2. Run './kmp_algorithm_parallel' follwed by the dataset name (e.g. 'i.csv') and the string pattern you want to search (e.g. 'and').
@@ -32,9 +32,9 @@ These steps will clone and open the repositry on your machine locally.
 ### Distributed (MPI) Code
 **In MSYS2 MINGW64 shell**
 1. Compile MPI code: 'mpicc kmp_mpi.c.c -o kmp_mpi'
-2. Run MPI program: 'kmp_mpi -np 4 ./kmp_mpi'
+2. Run MPI program: 'mpirun -np 4 ./kmp_mpi i.csv "and"'
 
 ## Additional Scripts
-1. **Makefile** - used for compiling c code files. 
-2. **Shell script (run_omp_tests.sh)** - used to reproduce experiments.
-
+1. **Makefile** - used for compiling c code files.
+2. **MPI folder -> Makefile** - to compile MPI version.
+3. **Shell script (run_omp_tests.sh)** - used to reproduce experiments.
