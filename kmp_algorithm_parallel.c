@@ -171,7 +171,13 @@ int main(int argc, char *argv[])
                 token[len - 2] = '\0';
             }
 
+<<<<<<< HEAD
+            int count = KMPSearch(pattern, token);
+
+            total_sum += count;
+=======
             total_sum += KMPSearch(pattern, token);
+>>>>>>> origin/main
         }
     }
 
