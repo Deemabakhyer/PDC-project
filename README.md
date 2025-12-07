@@ -30,7 +30,7 @@ These steps will clone and open the repositry on your machine locally.
 2. Run './kmp_algorithm_parallel' follwed by the dataset name (e.g. 'i.csv') and the string pattern you want to search (e.g. 'and').
 
 ### Distributed (MPI) Code
-**In MSYS2 MINGW64 shell**
+**In macOS Terminal**
 1. Compile MPI code: 'mpicc kmp_mpi.c.c -o kmp_mpi'
 2. Run MPI program: 'mpirun -np 4 ./kmp_mpi i.csv "and"'
 
