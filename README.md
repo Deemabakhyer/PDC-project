@@ -38,4 +38,4 @@ These steps will clone and open the repository on your machine locally.
 1. **Makefile** - used for compiling c code files.
 2. **MPI folder -> Makefile** - to compile MPI version.
 3. **Shell script (run_omp_tests.sh)** - used to reproduce parallel experiments.
-4. **Shell script (mpi_scaling_times.sh/)** - used to reproduce distibuted experiments.
+4. **Shell script (mpi_scaling_times.sh)** - used to reproduce distibuted experiments.
